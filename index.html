@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aura Goals | Interactive & Scrollable</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        function triggerPDF() {
+            const listElement = document.getElementById('goal-list');
+            const goals = listElement.querySelectorAll('.goal-item');
+            if(goals.length === 0) { alert("Add some tasks first!"); return; }
+
+            const pdfView = document.createElement('div');
+            pdfView.style.padding = "40px";
+            pdfView.style.fontFamily = "Arial, sans-serif";
+            pdfView.innerHTML = `<h1 style="text-align:center; color:#1e1b4b; border-bottom:3px solid #818cf8; padding-bottom:15px; margin-bottom:30px;">MY DAILY GOALS</h1>`;
+            
+            goals.forEach(goal => {
+                const title = goal.querySelector('.goal-title').innerText;
+                const date = goal.querySelector('.date-badge').innerText.replace(/\s+/g, ' ').trim();
+                const time = goal.querySelector('.goal-target-time').innerText;
+                const isDone = goal.classList.contains('completed-task');
+                
+                pdfView.innerHTML += `
+                    <div style="margin-bottom:20px; padding:15px; border-left:5px solid ${isDone ? '#10b981' : '#818cf8'}; background:#f8fafc;">
+                        <div style="color:#64748b; font-size:12px; font-weight:bold; text-transform:uppercase;">${date} @ ${time}</div>
+                        <div style="font-size:18px; font-weight:bold; color:#1e293b; margin-top:5px;">
+                            ${isDone ? '✓ ' : '○ '} ${title}
+                        </div>
+                    </div>`;
+            });
+
+            html2pdf().set({ margin: 10, filename: 'My_Aura_Goals.pdf' }).from(pdfView).save();
+        }
+
+        function openPicker(id) {
+            document.getElementById(id).showPicker();
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;800&display=swap');
+        :root { --accent: #818cf8; --success: #10b981; --danger: #ef4444; }
+
+        body, html { 
+            margin: 0; padding: 0; height: 100vh; background: #020617; color: white; 
+            font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 10% 90%, #1e1b4b 0%, #020617 100%); z-index: -1; }
+        
+        /* Dashboard height fixed to 85% of screen */
+        .dashboard { display: grid; grid-template-columns: 1fr 1.8fr; gap: 50px; width: 95%; max-width: 1200px; height: 85vh; align-items: start; }
+        
+        /* Panel matches dashboard height and hides outside overflow */
+        .glass-panel { 
+            background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(50px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 40px; 
+            padding: 35px; display: flex; flex-direction: column; 
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
+            height: 100%; box-sizing: border-box; overflow: hidden;
+        }
+        
+        .board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-shrink: 0; }
+        .board-title { font-size: 1.5rem; font-weight: 800; letter-spacing: 4px; color: var(--accent); border-left: 4px solid var(--accent); padding-left: 15px; }
+
+        .input-stack { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; flex-shrink: 0; }
+        
+        .clickable-wrapper { 
+            position: relative; display: flex; align-items: center; flex: 1; cursor: pointer;
+            background: rgba(0,0,0,0.4); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .clickable-wrapper svg { position: absolute; left: 15px; width: 20px; height: 20px; color: var(--accent); pointer-events: none; }
+        .clickable-wrapper input { 
+            width: 100%; background: transparent; border: none; padding: 15px 15px 15px 45px; 
+            color: white; outline: none; cursor: pointer;
+        }
+        input::-webkit-calendar-picker-indicator { opacity: 0; cursor: pointer; position: absolute; left:0; top:0; width:100%; height:100%; }
+
+        .add-btn { background: var(--accent); color: white; border: none; padding: 16px; border-radius: 15px; font-weight: 800; cursor: pointer; transition: 0.3s; flex-shrink: 0; }
+        .pdf-btn { background: rgba(129, 140, 248, 0.1); color: var(--accent); border: 1px solid var(--accent); padding: 8px 15px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 0.7rem; }
+
+        /* SCROLLABLE LIST - Fixed logic */
+        #goal-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding-right: 10px; 
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Custom Scrollbar Styling */
+        #goal-list::-webkit-scrollbar { width: 6px; }
+        #goal-list::-webkit-scrollbar-track { background: transparent; }
+        #goal-list::-webkit-scrollbar-thumb { background: rgba(129, 140, 248, 0.2); border-radius: 10px; }
+        #goal-list::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        .goal-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; margin-bottom: 12px; display: flex; align-items: center; min-height: 80px; flex-shrink: 0; }
+        .completed-task { opacity: 0.4; background: rgba(16, 185, 129, 0.05); }
+        .date-badge { background: var(--accent); width: 70px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; border-radius: 20px 0 0 20px; flex-shrink: 0; }
+        .goal-content { flex: 1; padding-left: 20px; }
+        .actions-wrapper { display: flex; align-items: center; gap: 10px; margin-right: 20px; }
+        
+        .done-trigger { background: rgba(16, 185, 129, 0.1); border: 2px solid var(--success); color: var(--success); padding: 8px 15px; border-radius: 12px; font-weight: 800; font-size: 0.6rem; cursor: pointer; }
+        .remove-trigger { background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-weight: bold; }
+        
+        .time-panel h1 { font-size: 6.5rem; font-weight: 800; margin:0; letter-spacing: -5px; }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+    <div class="dashboard">
+        <div class="time-panel">
+            <h1 id="clock">00:00</h1>
+            <div id="date-full" style="opacity:0.5; letter-spacing:3px;">LOADING...</div>
+        </div>
+        <div class="glass-panel">
+            <div class="board-header">
+                <h2 class="board-title">To Do List</h2>
+                <button class="pdf-btn" onclick="triggerPDF()">PDF REPORT</button>
+            </div>
+            
+            <div class="input-stack">
+                <input type="text" id="goal_in" placeholder="New Task..." style="background:rgba(0,0,0,0.4); border-radius:15px; border:1px solid rgba(255,255,255,0.1); padding:15px; color:white;">
+                <div style="display:flex; gap:10px;">
+                    <div class="clickable-wrapper" onclick="openPicker('date_in')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"></path></svg>
+                        <input type="date" id="date_in">
+                    </div>
+                    <div class="clickable-wrapper" onclick="openPicker('time_in')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <input type="time" id="time_in">
+                    </div>
+                </div>
+                <button class="add-btn" id="activate_btn">ADD TO LIST</button>
+            </div>
+
+            <div id="goal-list"></div>
+        </div>
+    </div>
+
+    <script type="py">
+        from pyscript import document, window
+        from datetime import datetime
+        import json
+        from pyodide.ffi import create_proxy
+
+        DB_KEY = "aura_final_v1"
+
+        def update_clock():
+            now = datetime.now()
+            document.getElementById("clock").innerText = now.strftime("%H:%M")
+            document.getElementById("date-full").innerText = now.strftime("%A, %B %d")
+
+        def load_goals():
+            raw = window.localStorage.getItem(DB_KEY)
+            return json.loads(raw) if raw else []
+
+        def save_goals(goals):
+            window.localStorage.setItem(DB_KEY, json.dumps(goals))
+
+        def refresh_ui():
+            container = document.getElementById("goal-list")
+            container.innerHTML = ""
+            goals = load_goals()
+
+            for idx, g in enumerate(goals):
+                is_done = g.get('done', False)
+                try:
+                    dt = datetime.strptime(g['date'], '%Y-%m-%d')
+                    m, d = dt.strftime('%b'), dt.strftime('%d')
+                except: m, d = "??", "??"
+
+                item = document.createElement("div")
+                item.className = f"goal-item {'completed-task' if is_done else ''}"
+                done_btn = f'<button class="done-trigger" id="done-{idx}">DONE</button>' if not is_done else '<span style="color:var(--success); font-weight:800; font-size:0.6rem;">FINISHED</span>'
+                
+                item.innerHTML = f"""
+                    <div class="date-badge"><span>{m}</span><span>{d}</span></div>
+                    <div class="goal-content">
+                        <div class="goal-title" style="font-weight:800;">{g['text']}</div>
+                        <div style="font-size:0.7rem; color:var(--accent);">⏰ <span class="goal-target-time">{g['time']}</span></div>
+                    </div>
+                    <div class="actions-wrapper">
+                        {done_btn}
+                        <button class="remove-trigger" id="del-{idx}">✕</button>
+                    </div>
+                """
+                container.appendChild(item)
+                
+                if not is_done:
+                    def handle_done(e, i=idx):
+                        data = load_goals()
+                        data[i]['done'] = True
+                        save_goals(data)
+                        refresh_ui()
+                    document.getElementById(f"done-{idx}").onclick = create_proxy(handle_done)
+
+                def handle_del(e, i=idx):
+                    data = load_goals()
+                    data.pop(i)
+                    save_goals(data)
+                    refresh_ui()
+                document.getElementById(f"del-{idx}").onclick = create_proxy(handle_del)
+
+        def add_item(e):
+            t, d, m = document.getElementById("goal_in").value, document.getElementById("date_in").value, document.getElementById("time_in").value
+            if t and d and m:
+                goals = load_goals()
+                goals.append({"text": t, "date": d, "time": m, "done": False})
+                save_goals(goals)
+                document.getElementById("goal_in").value = ""
+                refresh_ui()
+                # Scroll to bottom after adding
+                container = document.getElementById("goal-list")
+                container.scrollTop = container.scrollHeight
+
+        document.getElementById("activate_btn").onclick = create_proxy(add_item)
+        update_clock()
+        refresh_ui()
+        window.setInterval(create_proxy(update_clock), 1000)
+    </script>
+</body>
+</html>
